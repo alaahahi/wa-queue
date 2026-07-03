@@ -1,0 +1,62 @@
+{
+  "_index-Cpwt3THA.js": {
+    "file": "assets/index-Cpwt3THA.js",
+    "name": "index"
+  },
+  "node_modules/chart.js/auto/auto.js": {
+    "file": "assets/auto-CquwA8NN.js",
+    "name": "auto",
+    "src": "node_modules/chart.js/auto/auto.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/primeicons/fonts/primeicons.eot": {
+    "file": "assets/primeicons-DMOk5skT.eot",
+    "src": "node_modules/primeicons/fonts/primeicons.eot"
+  },
+  "node_modules/primeicons/fonts/primeicons.svg": {
+    "file": "assets/primeicons-Dr5RGzOO.svg",
+    "src": "node_modules/primeicons/fonts/primeicons.svg"
+  },
+  "node_modules/primeicons/fonts/primeicons.ttf": {
+    "file": "assets/primeicons-MpK4pl85.ttf",
+    "src": "node_modules/primeicons/fonts/primeicons.ttf"
+  },
+  "node_modules/primeicons/fonts/primeicons.woff": {
+    "file": "assets/primeicons-WjwUDZjB.woff",
+    "src": "node_modules/primeicons/fonts/primeicons.woff"
+  },
+  "node_modules/primeicons/fonts/primeicons.woff2": {
+    "file": "assets/primeicons-C6QP2o4f.woff2",
+    "src": "node_modules/primeicons/fonts/primeicons.woff2"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-XFMxVmEV.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-DmPY_bjM.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_index-Cpwt3THA.js"
+    ],
+    "dynamicImports": [
+      "node_modules/chart.js/auto/auto.js"
+    ]
+  },
+  "resources/js/central/main.js": {
+    "file": "assets/main-CmdFp7BZ.js",
+    "name": "main",
+    "src": "resources/js/central/main.js",
+    "isEntry": true,
+    "imports": [
+      "_index-Cpwt3THA.js"
+    ]
+  }
+}
