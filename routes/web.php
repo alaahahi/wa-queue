@@ -49,6 +49,9 @@ foreach (config('tenancy.central_domains') as $domain) {
 
 $reservedTenantSegments = implode('|', config('tenancy.reserved_path_segments', []));
 
+Route::redirect('/{tenant}', '/{tenant}/')
+    ->where('tenant', "(?!{$reservedTenantSegments})[a-zA-Z0-9_-]+");
+
 Route::prefix('{tenant}')
     ->where(['tenant' => "(?!{$reservedTenantSegments})[a-zA-Z0-9_-]+"])
     ->middleware([InitializeTenancyByPath::class])
