@@ -34,6 +34,10 @@ Route::middleware(['api'])->prefix('api/v1')->group(function () {
 Route::middleware(['web'])->group(function () {
     Route::get('/', fn () => view('app'));
 
+    $reserved = collect(config('tenancy.reserved_path_segments', []))
+        ->map(fn (string $segment) => '(?!'.preg_quote($segment, '/').'(?:/|$))')
+        ->implode('');
+
     Route::get('/{any}', fn () => view('app'))
-        ->where('any', '^(?!admin(?:/|$))(?!central(?:/|$)).+');
+        ->where('any', '^'.$reserved.'.+');
 });

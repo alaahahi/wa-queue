@@ -47,7 +47,9 @@ foreach (config('tenancy.central_domains') as $domain) {
 | https://intellij-app.com/kaml-kamal/api/v1/queue
 */
 
+$reservedTenantSegments = implode('|', config('tenancy.reserved_path_segments', []));
+
 Route::prefix('{tenant}')
-    ->where(['tenant' => '(?!admin|central|up)[a-zA-Z0-9_-]+'])
+    ->where(['tenant' => "(?!{$reservedTenantSegments})[a-zA-Z0-9_-]+"])
     ->middleware([InitializeTenancyByPath::class])
     ->group(base_path('routes/tenant_routes.php'));

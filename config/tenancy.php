@@ -23,6 +23,22 @@ return [
         'central.wa-queue.test',
     ]))),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Reserved URL segments (path-based tenancy)
+    |--------------------------------------------------------------------------
+    | لا تُعامل كمعرّف زبون — مثلاً /build يمنع تحميل ملفات Vite.
+    */
+    'reserved_path_segments' => [
+        'admin',
+        'central',
+        'up',
+        'build',
+        'storage',
+        'sanctum',
+        'tenancy',
+    ],
+
     /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
      * Their responsibility is making Laravel features tenant-aware.
