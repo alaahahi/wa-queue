@@ -19,6 +19,8 @@ interface WhatsappSenderRepositoryInterface
 
     public function update(WhatsappSender $sender, array $data): WhatsappSender;
 
+    public function delete(WhatsappSender $sender): void;
+
     public function incrementTodaySent(WhatsappSender $sender): void;
 
     public function resetDailyCounters(): void;

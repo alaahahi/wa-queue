@@ -76,6 +76,14 @@ class SenderController extends Controller
         ]);
     }
 
+    public function destroy(int $id): JsonResponse
+    {
+        $sender = $this->senderRepository->findById($id);
+        $this->senderRepository->delete($sender);
+
+        return response()->json(['message' => 'Sender deleted']);
+    }
+
     public function monitor(): array
     {
         return ['senders' => $this->monitorService->getMonitorCards()];

@@ -7,7 +7,7 @@ defineProps({
     sender: Object,
 });
 
-const emit = defineEmits(['check', 'toggle', 'redistribute']);
+const emit = defineEmits(['check', 'toggle', 'redistribute', 'delete']);
 
 const statusMap = {
     online: { label: 'متصل', severity: 'success', dot: 'bg-emerald-500' },
@@ -82,6 +82,14 @@ const statusMap = {
                         severity="warn"
                         outlined
                         @click="emit('redistribute', sender.id)"
+                    />
+                    <Button
+                        label="حذف"
+                        icon="pi pi-trash"
+                        size="small"
+                        severity="danger"
+                        outlined
+                        @click="emit('delete', sender.id)"
                     />
                 </div>
             </div>

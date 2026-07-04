@@ -57,6 +57,11 @@ class WhatsappSenderRepository implements WhatsappSenderRepositoryInterface
         return $sender->fresh();
     }
 
+    public function delete(WhatsappSender $sender): void
+    {
+        $sender->delete();
+    }
+
     public function incrementTodaySent(WhatsappSender $sender): void
     {
         $sender->increment('today_sent');

@@ -15,7 +15,7 @@ Route::middleware(['api'])->prefix('api/v1')->group(function () {
     Route::put('/settings', [DashboardController::class, 'updateSettings']);
 
     Route::get('/senders/monitor', [SenderController::class, 'monitor']);
-    Route::apiResource('senders', SenderController::class)->only(['index', 'store', 'update']);
+    Route::apiResource('senders', SenderController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('/senders/{id}/toggle', [SenderController::class, 'toggle']);
     Route::post('/senders/{id}/check-status', [SenderController::class, 'checkStatus']);
     Route::post('/senders/{id}/redistribute', [SenderController::class, 'redistribute']);
