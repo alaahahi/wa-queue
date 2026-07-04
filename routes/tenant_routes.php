@@ -6,9 +6,13 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\QueueController;
 use App\Http\Controllers\Api\V1\QueueMonitorController;
 use App\Http\Controllers\Api\V1\SenderController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['api'])->prefix('api/v1')->group(function () {
+Route::middleware(['api'])
+    ->withoutMiddleware([ValidateCsrfToken::class])
+    ->prefix('api/v1')
+    ->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/analytics', [DashboardController::class, 'analytics']);
     Route::get('/settings', [DashboardController::class, 'settings']);
