@@ -40,13 +40,24 @@ class ProcessSenderQueueJob implements ShouldQueue
 
         $sender = $senderRepository->findById($this->senderId);
 
-        if (! $sender || ! $sender->enabled || ! $sender->canSendNow()) {
+        if (! $sender || ! $sender->enabled) {
             return;
+        }
+
+        if ($sender->is_sending && $sender->updated_at?->lt(now()->subMinutes(2))) {
+            $sender->update(['is_sending' => false]);
+            $sender = $sender->fresh();
         }
 
         $message = $queueRepository->getAssignedForSender($sender->id);
 
         if (! $message) {
+            return;
+        }
+
+        if (! $sender->canSendNow()) {
+            $this->requeue($sender, $this->secondsUntilReady($sender));
+
             return;
         }
 
@@ -136,9 +147,30 @@ class ProcessSenderQueueJob implements ShouldQueue
         });
 
         $delay = $sender->delay_seconds;
+        $this->requeue($sender, $delay);
+    }
+
+    private function requeue(WhatsappSender $sender, int $seconds): void
+    {
         self::dispatch($this->senderId)
             ->onQueue($sender->workerQueueName())
-            ->delay(now()->addSeconds($delay));
+            ->delay(now()->addSeconds(max(1, $seconds)));
+    }
+
+    private function secondsUntilReady(WhatsappSender $sender): int
+    {
+        if ($sender->status === SenderStatus::Offline) {
+            return 30;
+        }
+
+        if ($sender->last_sent_at) {
+            $next = $sender->last_sent_at->copy()->addSeconds($sender->delay_seconds);
+            if ($next->isFuture()) {
+                return (int) now()->diffInSeconds($next) + 1;
+            }
+        }
+
+        return $sender->delay_seconds;
     }
 
     private function updateAvgResponse(WhatsappSender $sender, int $durationMs): void

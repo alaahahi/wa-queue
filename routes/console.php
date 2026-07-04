@@ -9,5 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('wa:dispatch')->everyMinute();
+Schedule::command('wa:retry-stuck')->everyMinute();
 Schedule::command('wa:monitor-senders')->everyMinute();
 Schedule::command('wa:reset-daily-counters')->dailyAt('00:00');

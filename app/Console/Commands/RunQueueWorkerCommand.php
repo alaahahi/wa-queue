@@ -16,6 +16,10 @@ class RunQueueWorkerCommand extends Command
 
     public function handle(WorkerHealthService $health): int
     {
+        if (tenancy()->initialized) {
+            tenancy()->end();
+        }
+
         $queues = $this->collectQueueNames();
 
         if ($queues === '') {
