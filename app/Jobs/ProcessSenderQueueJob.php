@@ -36,7 +36,7 @@ class ProcessSenderQueueJob implements ShouldQueue
         DispatcherService $dispatcherService,
         WorkerHealthService $workerHealth,
     ): void {
-        $workerHealth->pingSenderWorker();
+        $workerHealth->pingQueueWorker();
 
         $sender = $senderRepository->findById($this->senderId);
 

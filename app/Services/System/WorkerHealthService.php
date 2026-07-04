@@ -12,27 +12,27 @@ class WorkerHealthService
 {
     private const SCHEDULER_KEY = 'wa:heartbeat:scheduler';
 
-    private const SENDER_KEY = 'wa:heartbeat:sender';
+    private const QUEUE_WORKER_KEY = 'wa:heartbeat:queue_worker';
 
-    private const SCHEDULER_STALE_SECONDS = 120;
+    private const SCHEDULER_STALE_SECONDS = 180;
 
-    private const SENDER_STALE_SECONDS = 300;
+    private const QUEUE_WORKER_STALE_SECONDS = 180;
 
     public function pingScheduler(): void
     {
         Cache::put(self::SCHEDULER_KEY, now()->toIso8601String(), 600);
     }
 
-    public function pingSenderWorker(): void
+    public function pingQueueWorker(): void
     {
-        Cache::put(self::SENDER_KEY, now()->toIso8601String(), 600);
+        Cache::put(self::QUEUE_WORKER_KEY, now()->toIso8601String(), 600);
     }
 
     public function getStatus(): array
     {
         $stats = app(WhatsappQueueRepositoryInterface::class)->getStats();
         $scheduler = $this->workerStatus(self::SCHEDULER_KEY, self::SCHEDULER_STALE_SECONDS);
-        $senderWorker = $this->workerStatus(self::SENDER_KEY, self::SENDER_STALE_SECONDS);
+        $senderWorker = $this->workerStatus(self::QUEUE_WORKER_KEY, self::QUEUE_WORKER_STALE_SECONDS);
 
         $lastSent = WhatsappQueue::query()
             ->where('status', QueueStatus::Sent)
@@ -93,7 +93,7 @@ class WorkerHealthService
             return [
                 'alive' => false,
                 'label' => 'متوقف',
-                'hint' => 'فعّل Cron: php artisan schedule:run كل دقيقة',
+                'hint' => 'فعّل Cron كل دقيقة: php artisan schedule:run',
             ];
         }
 
@@ -101,7 +101,7 @@ class WorkerHealthService
             return [
                 'alive' => false,
                 'label' => 'جزئي',
-                'hint' => 'الجدولة تعمل لكن عامل الإرسال متوقف — شغّل: php artisan queue:work',
+                'hint' => 'الجدولة تعمل لكن معالجة الإرسال متوقفة — استبدل Cron بـ: php artisan wa:queue-work',
             ];
         }
 
@@ -109,7 +109,7 @@ class WorkerHealthService
             return [
                 'alive' => true,
                 'label' => 'جاهز',
-                'hint' => 'الجدولة تعمل — عامل الإرسال يشتغل عند وصول رسائل',
+                'hint' => 'الجدولة تعمل — معالجة الإرسال تُفحص كل دقيقة عبر wa:queue-work',
             ];
         }
 

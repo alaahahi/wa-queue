@@ -108,11 +108,11 @@ function statusSeverity(alive) {
 
                         <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                             <div class="flex items-center justify-between mb-1">
-                                <span class="font-medium">عامل الإرسال</span>
+                                <span class="font-medium">معالجة الإرسال</span>
                                 <Tag :value="system.sender_worker.label" :severity="statusSeverity(system.sender_worker.alive)" />
                             </div>
                             <div class="text-xs text-slate-500">
-                                {{ system.sender_worker.last_seen_human ? `آخر إرسال: ${system.sender_worker.last_seen_human}` : 'لم يُرسل بعد' }}
+                                {{ system.sender_worker.last_seen_human ? `آخر نشاط: ${system.sender_worker.last_seen_human}` : 'لم يعمل بعد — راجع Cron' }}
                             </div>
                         </div>
                     </div>
@@ -138,6 +138,11 @@ function statusSeverity(alive) {
 
                     <div v-if="system.last_sent_human" class="text-xs text-slate-500">
                         آخر رسالة ناجحة: {{ system.last_sent_human }}
+                    </div>
+
+                    <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3 text-xs font-mono text-slate-600 dark:text-slate-400 space-y-1" dir="ltr">
+                        <div>* * * * * php /home/intellij/public_html/wa/artisan schedule:run</div>
+                        <div>* * * * * php /home/intellij/public_html/wa/artisan wa:queue-work</div>
                     </div>
                 </div>
             </template>
