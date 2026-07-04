@@ -11,6 +11,7 @@ use App\Enums\SenderStatus;
 use App\Models\WhatsappQueueLog;
 use App\Models\WhatsappSender;
 use App\Services\Queue\DispatcherService;
+use App\Services\System\WorkerHealthService;
 use App\Services\TextMeBot\TextMeBotClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +34,10 @@ class ProcessSenderQueueJob implements ShouldQueue
         WhatsappSettingsRepositoryInterface $settingsRepository,
         TextMeBotClient $textMeBotClient,
         DispatcherService $dispatcherService,
+        WorkerHealthService $workerHealth,
     ): void {
+        $workerHealth->pingSenderWorker();
+
         $sender = $senderRepository->findById($this->senderId);
 
         if (! $sender || ! $sender->enabled || ! $sender->canSendNow()) {

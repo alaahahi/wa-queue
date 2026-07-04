@@ -30,7 +30,7 @@
     "src": "node_modules/primeicons/fonts/primeicons.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-DPPCl36U.css",
+    "file": "assets/app-culxIxsD.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -39,7 +39,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-lPKR-bA9.js",
+    "file": "assets/app-DXt4GApO.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

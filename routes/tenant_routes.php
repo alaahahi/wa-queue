@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\QueueController;
 use App\Http\Controllers\Api\V1\QueueMonitorController;
 use App\Http\Controllers\Api\V1\SenderController;
+use App\Http\Controllers\Api\V1\SystemStatusController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,7 @@ Route::middleware(['api'])
     Route::get('/analytics', [DashboardController::class, 'analytics']);
     Route::get('/settings', [DashboardController::class, 'settings']);
     Route::put('/settings', [DashboardController::class, 'updateSettings']);
+    Route::get('/system/status', SystemStatusController::class);
 
     Route::get('/senders/monitor', [SenderController::class, 'monitor']);
     Route::apiResource('senders', SenderController::class)->only(['index', 'store', 'update', 'destroy']);
