@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\UpdateSettingsRequest;
 use App\Services\Analytics\AnalyticsService;
 use App\Services\Sender\SenderMonitorService;
+use App\Services\System\WorkerHealthService;
 
 class DashboardController extends Controller
 {
@@ -16,6 +17,7 @@ class DashboardController extends Controller
         private readonly SenderMonitorService $monitorService,
         private readonly AnalyticsService $analyticsService,
         private readonly WhatsappSettingsRepositoryInterface $settingsRepository,
+        private readonly WorkerHealthService $workerHealth,
     ) {}
 
     public function index(): array
@@ -34,13 +36,19 @@ class DashboardController extends Controller
 
     public function settings(): array
     {
-        return $this->settingsRepository->all();
+        return [
+            'settings' => $this->settingsRepository->all(),
+            'system' => $this->workerHealth->getStatus(),
+        ];
     }
 
     public function updateSettings(UpdateSettingsRequest $request): array
     {
         $this->settingsRepository->setMany($request->validated());
 
-        return $this->settingsRepository->all();
+        return [
+            'settings' => $this->settingsRepository->all(),
+            'system' => $this->workerHealth->getStatus(),
+        ];
     }
 }

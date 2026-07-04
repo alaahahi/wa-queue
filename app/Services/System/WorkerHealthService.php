@@ -3,29 +3,34 @@
 namespace App\Services\System;
 
 use App\Contracts\Repositories\WhatsappQueueRepositoryInterface;
+use App\Contracts\Repositories\WhatsappSettingsRepositoryInterface;
 use App\Enums\QueueStatus;
 use App\Models\WhatsappQueue;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class WorkerHealthService
 {
-    private const SCHEDULER_KEY = 'wa:heartbeat:scheduler';
+    private const SCHEDULER_KEY = '_heartbeat_scheduler';
 
-    private const QUEUE_WORKER_KEY = 'wa:heartbeat:queue_worker';
+    private const QUEUE_WORKER_KEY = '_heartbeat_queue_worker';
 
     private const SCHEDULER_STALE_SECONDS = 180;
 
     private const QUEUE_WORKER_STALE_SECONDS = 180;
 
+    public function __construct(
+        private readonly WhatsappSettingsRepositoryInterface $settings,
+    ) {}
+
     public function pingScheduler(): void
     {
-        Cache::put(self::SCHEDULER_KEY, now()->toIso8601String(), 600);
+        $this->settings->set(self::SCHEDULER_KEY, now()->toIso8601String());
     }
 
     public function pingQueueWorker(): void
     {
-        Cache::put(self::QUEUE_WORKER_KEY, now()->toIso8601String(), 600);
+        $this->settings->set(self::QUEUE_WORKER_KEY, now()->toIso8601String());
     }
 
     public function getStatus(): array
@@ -54,14 +59,27 @@ class WorkerHealthService
                 'sent_today' => $stats['sent_today'],
                 'queue_size' => $stats['queue_size'],
             ],
+            'jobs_in_queue' => $this->centralJobsCount(),
             'last_sent_at' => $lastSent?->toIso8601String(),
             'last_sent_human' => $lastSent?->diffForHumans(),
+            'checked_at' => now()->toIso8601String(),
         ];
     }
 
-    private function workerStatus(string $key, int staleSeconds): array
+    private function centralJobsCount(): int
     {
-        $at = $this->parseTime(Cache::get($key));
+        try {
+            $connection = config('tenancy.database.central_connection', config('database.default'));
+
+            return (int) DB::connection($connection)->table('jobs')->count();
+        } catch (\Throwable) {
+            return 0;
+        }
+    }
+
+    private function workerStatus(string $key, int $staleSeconds): array
+    {
+        $at = $this->parseTime($this->settings->get($key));
 
         if (! $at) {
             return [
@@ -93,7 +111,7 @@ class WorkerHealthService
             return [
                 'alive' => false,
                 'label' => 'متوقف',
-                'hint' => 'فعّل Cron كل دقيقة: php artisan schedule:run',
+                'hint' => 'Cron غير نشط — أضف: * * * * * php artisan schedule:run',
             ];
         }
 
@@ -101,7 +119,7 @@ class WorkerHealthService
             return [
                 'alive' => false,
                 'label' => 'جزئي',
-                'hint' => 'الجدولة تعمل لكن معالجة الإرسال متوقفة — استبدل Cron بـ: php artisan wa:queue-work',
+                'hint' => 'الجدولة تعمل لكن الإرسال متوقف — شغّل: php artisan wa:dispatch',
             ];
         }
 
@@ -109,7 +127,7 @@ class WorkerHealthService
             return [
                 'alive' => true,
                 'label' => 'جاهز',
-                'hint' => 'الجدولة تعمل — معالجة الإرسال تُفحص كل دقيقة عبر wa:queue-work',
+                'hint' => 'الجدولة تعمل — بانتظار رسائل جديدة',
             ];
         }
 
