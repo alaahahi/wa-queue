@@ -1,6 +1,6 @@
 {
-  "_index-DAGqYlot.js": {
-    "file": "assets/index-DAGqYlot.js",
+  "_index-CaXjpLhS.js": {
+    "file": "assets/index-CaXjpLhS.js",
     "name": "index"
   },
   "node_modules/chart.js/auto/auto.js": {
@@ -30,7 +30,7 @@
     "src": "node_modules/primeicons/fonts/primeicons.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-zGGh9Izc.css",
+    "file": "assets/app-Dn4ZGnmb.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -39,24 +39,24 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-B7MVSnZ3.js",
+    "file": "assets/app-B-Oo5cGT.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_index-DAGqYlot.js"
+      "_index-CaXjpLhS.js"
     ],
     "dynamicImports": [
       "node_modules/chart.js/auto/auto.js"
     ]
   },
   "resources/js/central/main.js": {
-    "file": "assets/main-Dh45M2ep.js",
+    "file": "assets/main-0uhZy1UX.js",
     "name": "main",
     "src": "resources/js/central/main.js",
     "isEntry": true,
     "imports": [
-      "_index-DAGqYlot.js"
+      "_index-CaXjpLhS.js"
     ]
   }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Contracts\Repositories\WhatsappSenderRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreSenderRequest;
+use App\Http\Requests\Api\V1\UpdateSenderRequest;
 use App\Http\Resources\WhatsappSenderResource;
 use App\Services\Queue\FailoverService;
 use App\Services\Sender\SenderMonitorService;
@@ -38,7 +39,7 @@ class SenderController extends Controller
         return new WhatsappSenderResource($sender);
     }
 
-    public function update(StoreSenderRequest $request, int $id): WhatsappSenderResource
+    public function update(UpdateSenderRequest $request, int $id): WhatsappSenderResource
     {
         $sender = $this->senderRepository->findById($id);
         $sender = $this->senderRepository->update($sender, $request->validated());

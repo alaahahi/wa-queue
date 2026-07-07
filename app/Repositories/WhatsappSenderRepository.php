@@ -6,6 +6,7 @@ use App\Contracts\Repositories\WhatsappSenderRepositoryInterface;
 use App\Enums\SenderStatus;
 use App\Models\WhatsappQueue;
 use App\Models\WhatsappSender;
+use App\Models\WhatsappSenderApiKeyLog;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +15,9 @@ class WhatsappSenderRepository implements WhatsappSenderRepositoryInterface
     public function all(): Collection
     {
         return WhatsappSender::query()
+            ->with([
+                'apiKeyLogs' => fn ($q) => $q->orderByDesc('created_at')->limit(10),
+            ])
             ->withCount([
                 'queueMessages as queue_count' => fn ($q) => $q->whereIn('status', ['pending', 'assigned', 'sending']),
             ])
@@ -47,14 +51,35 @@ class WhatsappSenderRepository implements WhatsappSenderRepositoryInterface
 
     public function create(array $data): WhatsappSender
     {
-        return WhatsappSender::query()->create($data);
+        $data['api_key_rotated_at'] = now();
+
+        $sender = WhatsappSender::query()->create($data);
+
+        $this->logApiKey($sender, WhatsappSender::apiKeyHint($sender->api_key), 'added');
+
+        return $sender->fresh(['apiKeyLogs']);
     }
 
     public function update(WhatsappSender $sender, array $data): WhatsappSender
     {
+        if (array_key_exists('api_key', $data) && $data['api_key'] !== $sender->api_key) {
+            $this->logApiKey($sender, WhatsappSender::apiKeyHint($sender->api_key), 'rotated');
+            $data['api_key_rotated_at'] = now();
+        }
+
         $sender->update($data);
 
-        return $sender->fresh();
+        return $sender->fresh(['apiKeyLogs']);
+    }
+
+    private function logApiKey(WhatsappSender $sender, string $keyHint, string $action): void
+    {
+        WhatsappSenderApiKeyLog::query()->create([
+            'sender_id' => $sender->id,
+            'key_hint' => $keyHint,
+            'action' => $action,
+            'created_at' => now(),
+        ]);
     }
 
     public function delete(WhatsappSender $sender): void

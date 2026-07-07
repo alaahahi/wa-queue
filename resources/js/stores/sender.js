@@ -45,6 +45,11 @@ export const useSenderStore = defineStore('sender', {
             await this.fetchSenders();
         },
 
+        async updateApiKey(id, apiKey) {
+            await api.put(`/senders/${id}`, { api_key: apiKey });
+            await this.fetchSenders();
+        },
+
         async delete(id) {
             await api.delete(`/senders/${id}`);
             await this.fetchSenders();

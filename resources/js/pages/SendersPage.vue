@@ -5,6 +5,10 @@ import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import SenderCard from '@/components/senders/SenderCard.vue';
 import Button from 'primevue/button';
+import Card from 'primevue/card';
+import Tag from 'primevue/tag';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
@@ -14,6 +18,8 @@ const store = useSenderStore();
 const toast = useToast();
 const confirm = useConfirm();
 const showDialog = ref(false);
+const newApiKey = ref('');
+const keyLoading = ref(false);
 const form = ref({
     name: '',
     phone: '',
@@ -62,6 +68,26 @@ function onDelete(id) {
         },
     });
 }
+
+async function updateApiKey() {
+    const sender = store.senders[0];
+    if (!sender || !newApiKey.value.trim()) {
+        return;
+    }
+
+    keyLoading.value = true;
+    try {
+        await store.updateApiKey(sender.id, newApiKey.value.trim());
+        newApiKey.value = '';
+        toast.add({ severity: 'success', summary: 'تم تحديث API Key', life: 3000 });
+    } finally {
+        keyLoading.value = false;
+    }
+}
+
+function actionLabel(action) {
+    return action === 'added' ? 'إضافة' : 'تبديل';
+}
 </script>
 
 <template>
@@ -89,7 +115,7 @@ function onDelete(id) {
             <Button label="إضافة رقم" icon="pi pi-plus" @click="showDialog = true" />
         </div>
 
-        <div v-else class="max-w-xl">
+        <div v-else class="max-w-xl space-y-4">
             <SenderCard
                 :sender="store.senders[0]"
                 @check="onCheck"
@@ -97,6 +123,69 @@ function onDelete(id) {
                 @redistribute="onRedistribute"
                 @delete="onDelete"
             />
+
+            <Card>
+                <template #title>TextMeBot API Key</template>
+                <template #content>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between gap-3 text-sm">
+                            <div>
+                                <div class="font-mono" dir="ltr">{{ store.senders[0].api_key_hint }}</div>
+                                <div class="text-xs text-slate-500 mt-1">
+                                    آخر تحديث: {{ store.senders[0].api_key_rotated_human || '—' }}
+                                </div>
+                            </div>
+                            <Tag
+                                v-if="store.senders[0].api_key_rotation_due"
+                                value="يحتاج تبديل"
+                                severity="warn"
+                            />
+                            <Tag
+                                v-else
+                                value="ساري"
+                                severity="success"
+                            />
+                        </div>
+
+                        <div
+                            v-if="store.senders[0].api_key_rotation_due"
+                            class="text-xs text-amber-700 bg-amber-50 rounded-lg p-3"
+                        >
+                            يُفضّل تبديل المفتاح كل {{ store.senders[0].api_key_rotation_days }} أيام
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-slate-500">مفتاح جديد</label>
+                            <InputText v-model="newApiKey" class="w-full font-mono" dir="ltr" placeholder="الصق المفتاح الجديد" />
+                        </div>
+                        <Button
+                            label="حفظ المفتاح الجديد"
+                            icon="pi pi-key"
+                            class="w-full"
+                            :loading="keyLoading"
+                            :disabled="!newApiKey.trim()"
+                            @click="updateApiKey"
+                        />
+
+                        <div v-if="store.senders[0].api_key_logs?.length" class="pt-2 border-t border-slate-100">
+                            <div class="text-sm font-medium mb-2">سجل المفاتيح</div>
+                            <DataTable :value="store.senders[0].api_key_logs" size="small" striped-rows>
+                                <Column header="المفتاح">
+                                    <template #body="{ data }">
+                                        <span class="font-mono" dir="ltr">{{ data.key_hint }}</span>
+                                    </template>
+                                </Column>
+                                <Column header="الإجراء">
+                                    <template #body="{ data }">
+                                        {{ actionLabel(data.action) }}
+                                    </template>
+                                </Column>
+                                <Column field="created_human" header="التاريخ" />
+                            </DataTable>
+                        </div>
+                    </div>
+                </template>
+            </Card>
         </div>
 
         <Dialog v-model:visible="showDialog" header="إضافة رقم WhatsApp" modal class="w-full max-w-lg">

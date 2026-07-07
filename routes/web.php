@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Central\MonitorController;
+use App\Http\Controllers\Central\SystemToolsController;
 use App\Http\Controllers\Central\TenantController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
@@ -21,6 +22,11 @@ Route::prefix('central/api/v1')->group(function () {
 
     Route::apiResource('tenants', TenantController::class);
     Route::post('/tenants/{id}/domains', [TenantController::class, 'addDomain']);
+
+    Route::get('/system/status', [SystemToolsController::class, 'status']);
+    Route::get('/system/logs', [SystemToolsController::class, 'logs']);
+    Route::post('/system/migrate-central', [SystemToolsController::class, 'migrateCentral']);
+    Route::post('/system/migrate-tenants', [SystemToolsController::class, 'migrateTenants']);
 });
 
 Route::get('/admin/{any?}', function () {

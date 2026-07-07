@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Models\WhatsappSender;
 
 class WhatsappSenderResource extends JsonResource
 {
@@ -29,6 +30,17 @@ class WhatsappSenderResource extends JsonResource
             'is_sending' => $this->is_sending,
             'queue_count' => $this->queue_count ?? $this->pendingQueueCount(),
             'api_connected' => $this->status->value !== 'offline',
+            'api_key_hint' => WhatsappSender::apiKeyHint($this->api_key),
+            'api_key_rotated_at' => $this->api_key_rotated_at?->toIso8601String(),
+            'api_key_rotated_human' => $this->api_key_rotated_at?->diffForHumans(),
+            'api_key_rotation_due' => $this->isApiKeyRotationDue(),
+            'api_key_rotation_days' => (int) config('whatsapp.api_key_rotation_days', 7),
+            'api_key_logs' => $this->whenLoaded('apiKeyLogs', fn () => $this->apiKeyLogs->map(fn ($log) => [
+                'key_hint' => $log->key_hint,
+                'action' => $log->action,
+                'created_at' => $log->created_at?->toIso8601String(),
+                'created_human' => $log->created_at?->diffForHumans(),
+            ])),
         ];
     }
 }

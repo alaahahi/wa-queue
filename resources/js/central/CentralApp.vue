@@ -10,6 +10,7 @@ const route = useRoute();
 const links = [
     { to: '/', icon: 'pi pi-chart-line', label: 'مراقبة الزبائن' },
     { to: '/tenants', icon: 'pi pi-building', label: 'إدارة الزبائن' },
+    { to: '/tools', icon: 'pi pi-wrench', label: 'أدوات النظام' },
 ];
 
 function toggleDark() {
@@ -38,7 +39,7 @@ function toggleDark() {
                     :key="link.to"
                     :to="link.to"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="route.path === link.to
+                    :class="route.path === link.to || (link.to !== '/' && route.path.startsWith(link.to))
                         ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
                         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'"
                 >
