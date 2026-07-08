@@ -55,7 +55,7 @@ class WhatsappSenderRepository implements WhatsappSenderRepositoryInterface
 
         $sender = WhatsappSender::query()->create($data);
 
-        $this->logApiKey($sender, WhatsappSender::apiKeyHint($sender->api_key), 'added');
+        $this->logApiKey($sender, (string) $sender->api_key, 'added');
 
         return $sender->fresh(['apiKeyLogs']);
     }
@@ -63,7 +63,7 @@ class WhatsappSenderRepository implements WhatsappSenderRepositoryInterface
     public function update(WhatsappSender $sender, array $data): WhatsappSender
     {
         if (array_key_exists('api_key', $data) && $data['api_key'] !== $sender->api_key) {
-            $this->logApiKey($sender, WhatsappSender::apiKeyHint($sender->api_key), 'rotated');
+            $this->logApiKey($sender, (string) $sender->api_key, 'rotated');
             $data['api_key_rotated_at'] = now();
         }
 

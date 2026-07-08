@@ -95,8 +95,12 @@ class AnalyticsService
 
     private function messagesByHour(\DateTimeInterface $since): array
     {
+        $hourExpr = $this->isSqlite()
+            ? "strftime('%H', sent_at)"
+            : 'HOUR(sent_at)';
+
         return WhatsappQueue::query()
-            ->select(DB::raw('HOUR(sent_at) as hour'), DB::raw('count(*) as total'))
+            ->select(DB::raw("{$hourExpr} as hour"), DB::raw('count(*) as total'))
             ->where('status', QueueStatus::Sent)
             ->where('sent_at', '>=', $since)
             ->groupBy('hour')
@@ -107,14 +111,23 @@ class AnalyticsService
 
     private function messagesByDay(\DateTimeInterface $since): array
     {
+        $dayExpr = $this->isSqlite()
+            ? "strftime('%Y-%m-%d', sent_at)"
+            : 'DATE(sent_at)';
+
         return WhatsappQueue::query()
-            ->select(DB::raw('DATE(sent_at) as day'), DB::raw('count(*) as total'))
+            ->select(DB::raw("{$dayExpr} as day"), DB::raw('count(*) as total'))
             ->where('status', QueueStatus::Sent)
             ->where('sent_at', '>=', $since)
             ->groupBy('day')
             ->orderBy('day')
             ->get()
             ->toArray();
+    }
+
+    private function isSqlite(): bool
+    {
+        return DB::connection()->getDriverName() === 'sqlite';
     }
 
     private function topActiveSenders(\DateTimeInterface $since): array
