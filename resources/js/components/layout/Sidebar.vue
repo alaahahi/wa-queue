@@ -30,12 +30,18 @@ const links = [
                 v-for="link in links"
                 :key="link.to"
                 :to="link.to"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
+                :aria-current="route.path === link.to ? 'page' : undefined"
+                class="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150"
                 :class="route.path === link.to
-                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                    ? 'bg-emerald-50 font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'"
             >
-                <i :class="link.icon"></i>
+                <span
+                    v-if="route.path === link.to"
+                    class="absolute inset-y-1.5 right-0 w-1 rounded-full bg-emerald-600 dark:bg-emerald-400"
+                    aria-hidden="true"
+                ></span>
+                <i :class="link.icon" class="w-5 text-center"></i>
                 {{ link.label }}
             </RouterLink>
         </nav>

@@ -38,12 +38,18 @@ function toggleDark() {
                     v-for="link in links"
                     :key="link.to"
                     :to="link.to"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors"
+                    :aria-current="route.path === link.to || (link.to !== '/' && route.path.startsWith(link.to)) ? 'page' : undefined"
+                    class="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors duration-150"
                     :class="route.path === link.to || (link.to !== '/' && route.path.startsWith(link.to))
-                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                        ? 'bg-indigo-50 font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
                         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'"
                 >
-                    <i :class="link.icon"></i>
+                    <span
+                        v-if="route.path === link.to || (link.to !== '/' && route.path.startsWith(link.to))"
+                        class="absolute inset-y-1.5 right-0 w-1 rounded-full bg-indigo-600 dark:bg-indigo-400"
+                        aria-hidden="true"
+                    ></span>
+                    <i :class="link.icon" class="w-5 text-center"></i>
                     {{ link.label }}
                 </RouterLink>
             </nav>
@@ -53,7 +59,8 @@ function toggleDark() {
             <header class="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur flex items-center justify-between px-4 md:px-6">
                 <span class="text-sm text-slate-500">لوحة إدارة مركزية — جميع الزبائن</span>
                 <button
-                    class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center"
+                    class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                    :aria-label="dark ? 'التبديل للوضع الفاتح' : 'التبديل للوضع الداكن'"
                     @click="toggleDark"
                 >
                     <i :class="dark ? 'pi pi-sun' : 'pi pi-moon'"></i>

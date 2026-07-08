@@ -12,7 +12,8 @@ defineEmits(['toggle-dark']);
         </div>
         <div class="flex items-center gap-3">
             <button
-                class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
+                class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'التبديل للوضع الفاتح' : 'التبديل للوضع الداكن'"
                 @click="$emit('toggle-dark')"
             >
                 <i :class="dark ? 'pi pi-sun' : 'pi pi-moon'"></i>

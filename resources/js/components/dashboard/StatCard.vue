@@ -20,13 +20,13 @@ const colors = {
 </script>
 
 <template>
-    <Card class="!shadow-sm">
+    <Card class="!shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
         <template #content>
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <div class="text-xs text-slate-500 mb-1">{{ label }}</div>
+                    <div class="text-xs font-medium text-slate-500 mb-1">{{ label }}</div>
                     <Skeleton v-if="loading" width="4rem" height="1.75rem" />
-                    <div v-else class="text-2xl font-bold tracking-tight">{{ value ?? '—' }}</div>
+                    <div v-else class="text-2xl font-bold tracking-tight tabular-nums">{{ value ?? '—' }}</div>
                 </div>
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" :class="colors[color]">
                     <i :class="icon"></i>
