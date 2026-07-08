@@ -52,6 +52,27 @@ class SystemToolsController extends Controller
         return $this->runArtisan('tenants:migrate', $params);
     }
 
+    public function clearLogs(): JsonResponse
+    {
+        $path = storage_path('logs/laravel.log');
+
+        try {
+            if (file_exists($path)) {
+                file_put_contents($path, '');
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم مسح سجل الأخطاء',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function status(): JsonResponse
     {
         $logPath = storage_path('logs/laravel.log');
@@ -68,6 +89,9 @@ class SystemToolsController extends Controller
 
     private function runArtisan(string $command, array $parameters = []): JsonResponse
     {
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
         try {
             $exitCode = Artisan::call($command, $parameters);
             $output = trim(Artisan::output());

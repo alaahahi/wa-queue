@@ -48,6 +48,35 @@ async function loadLogs() {
     }
 }
 
+function confirmClearLogs() {
+    confirm.require({
+        message: 'مسح كامل محتوى سجل الأخطاء؟ لا يمكن التراجع.',
+        header: 'تأكيد المسح',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'مسح',
+        rejectLabel: 'إلغاء',
+        acceptClass: 'p-button-danger',
+        accept: clearLogs,
+    });
+}
+
+async function clearLogs() {
+    running.value = 'clear-logs';
+    try {
+        const { data } = await api.post('/system/clear-logs');
+        toast.add({
+            severity: data.success ? 'success' : 'error',
+            summary: data.message,
+            life: 3000,
+        });
+        await Promise.all([loadLogs(), loadStatus()]);
+    } catch (e) {
+        toast.add({ severity: 'error', summary: 'فشل المسح', detail: e.response?.data?.message || e.message, life: 5000 });
+    } finally {
+        running.value = '';
+    }
+}
+
 function runMigration(type) {
     const isCentral = type === 'central';
     const message = isCentral
@@ -191,7 +220,25 @@ function formatBytes(bytes) {
             <template #title>
                 <div class="flex items-center justify-between gap-3">
                     <span>سجل الأخطاء (laravel.log)</span>
-                    <Button icon="pi pi-refresh" text rounded :loading="loadingLogs" @click="loadLogs" />
+                    <div class="flex items-center gap-1">
+                        <Button
+                            icon="pi pi-refresh"
+                            text
+                            rounded
+                            aria-label="تحديث السجل"
+                            :loading="loadingLogs"
+                            @click="loadLogs"
+                        />
+                        <Button
+                            icon="pi pi-trash"
+                            text
+                            rounded
+                            severity="danger"
+                            aria-label="مسح السجل"
+                            :loading="running === 'clear-logs'"
+                            @click="confirmClearLogs"
+                        />
+                    </div>
                 </div>
             </template>
             <template #content>
