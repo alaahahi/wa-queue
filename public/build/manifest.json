@@ -1,6 +1,6 @@
 {
-  "_index-DpM-zBVE.js": {
-    "file": "assets/index-DpM-zBVE.js",
+  "_index-CJut9i1n.js": {
+    "file": "assets/index-CJut9i1n.js",
     "name": "index"
   },
   "node_modules/chart.js/auto/auto.js": {
@@ -30,7 +30,7 @@
     "src": "node_modules/primeicons/fonts/primeicons.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-TVvk7l_d.css",
+    "file": "assets/app-BjY5B23E.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -39,24 +39,24 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-BgQH6_9S.js",
+    "file": "assets/app-CP6vuQuU.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "_index-DpM-zBVE.js"
+      "_index-CJut9i1n.js"
     ],
     "dynamicImports": [
       "node_modules/chart.js/auto/auto.js"
     ]
   },
   "resources/js/central/main.js": {
-    "file": "assets/main-Bf0T2zi8.js",
+    "file": "assets/main-DYjCFMR8.js",
     "name": "main",
     "src": "resources/js/central/main.js",
     "isEntry": true,
     "imports": [
-      "_index-DpM-zBVE.js"
+      "_index-CJut9i1n.js"
     ]
   }
 }

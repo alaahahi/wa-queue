@@ -12,7 +12,6 @@ import Column from 'primevue/column';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import Password from 'primevue/password';
 import Skeleton from 'primevue/skeleton';
 
 const store = useSenderStore();
@@ -139,14 +138,33 @@ function actionMeta(action) {
         ? { label: 'إضافة', severity: 'success', icon: 'pi pi-plus' }
         : { label: 'تبديل', severity: 'warn', icon: 'pi pi-refresh' };
 }
+
+const copied = ref(false);
+
+async function copyKey(value) {
+    if (!value) return;
+    try {
+        await navigator.clipboard.writeText(value);
+        copied.value = true;
+        toast.add({ severity: 'success', summary: 'تم نسخ المفتاح', life: 2000 });
+        setTimeout(() => (copied.value = false), 2000);
+    } catch {
+        toast.add({ severity: 'warn', summary: 'تعذّر النسخ التلقائي', detail: 'انسخ المفتاح يدوياً', life: 3000 });
+    }
+}
 </script>
 
 <template>
     <div class="space-y-6">
         <div class="flex items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold">رقم WhatsApp</h1>
-                <p class="text-sm text-slate-500 mt-1">رقم واحد لكل حساب — مفتاح API، حالة الاتصال، والحد اليومي</p>
+            <div class="flex items-center gap-3">
+                <span class="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shadow-emerald-600/30">
+                    <i class="pi pi-whatsapp text-xl"></i>
+                </span>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">رقم WhatsApp</h1>
+                    <p class="text-sm text-slate-500 mt-0.5">رقم واحد لكل حساب — مفتاح API، حالة الاتصال، والحد اليومي</p>
+                </div>
             </div>
             <Button
                 v-if="!hasSender && !store.loading"
@@ -195,28 +213,51 @@ function actionMeta(action) {
                 </template>
                 <template #content>
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                            <div>
-                                <div class="font-mono text-base tracking-wider" dir="ltr">{{ sender.api_key_hint }}</div>
-                                <div class="text-xs text-slate-500 mt-1">
-                                    <i class="pi pi-clock text-[10px]" />
+                        <div class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                            <div class="flex items-center justify-between gap-3 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700">
+                                <span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                                    <i class="pi pi-lock text-[11px]" />
+                                    المفتاح الحالي
+                                </span>
+                                <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                                    <i class="pi pi-clock text-[11px]" />
                                     آخر تحديث: {{ sender.api_key_rotated_human || '—' }}
-                                </div>
+                                </span>
                             </div>
-                            <Button
-                                label="تبديل المفتاح"
-                                icon="pi pi-refresh"
-                                size="small"
-                                outlined
-                                aria-label="تبديل مفتاح API"
-                                @click="openKeyDialog"
-                            />
+                            <div class="flex items-stretch">
+                                <code
+                                    class="flex-1 min-w-0 px-3 py-3 font-mono text-sm break-all leading-relaxed bg-white dark:bg-slate-900 select-all"
+                                    dir="ltr"
+                                >{{ sender.api_key || '—' }}</code>
+                                <button
+                                    type="button"
+                                    class="shrink-0 px-4 flex items-center gap-1.5 text-sm border-r border-slate-200 dark:border-slate-700 transition-colors"
+                                    :class="copied
+                                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40'
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                                    :aria-label="copied ? 'تم النسخ' : 'نسخ المفتاح'"
+                                    @click="copyKey(sender.api_key)"
+                                >
+                                    <i :class="copied ? 'pi pi-check' : 'pi pi-copy'" />
+                                    <span class="hidden sm:inline">{{ copied ? 'تم' : 'نسخ' }}</span>
+                                </button>
+                            </div>
                         </div>
+
+                        <Button
+                            label="تبديل المفتاح"
+                            icon="pi pi-refresh"
+                            size="small"
+                            outlined
+                            class="w-full"
+                            aria-label="تبديل مفتاح API"
+                            @click="openKeyDialog"
+                        />
 
                         <div
                             v-if="sender.api_key_rotation_due"
                             role="alert"
-                            class="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3"
+                            class="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg p-3"
                         >
                             <i class="pi pi-exclamation-triangle mt-0.5" />
                             <span>مضى أكثر من {{ sender.api_key_rotation_days }} أيام على آخر تبديل — يُنصح بتحديث المفتاح للحفاظ على الأمان.</span>
@@ -262,13 +303,11 @@ function actionMeta(action) {
                     <label for="new-api-key" class="text-sm text-slate-600 dark:text-slate-300">
                         المفتاح الجديد <span class="text-red-500">*</span>
                     </label>
-                    <Password
-                        input-id="new-api-key"
+                    <InputText
+                        id="new-api-key"
                         v-model="newApiKey"
-                        toggle-mask
-                        :feedback="false"
-                        fluid
-                        input-class="font-mono"
+                        class="w-full font-mono"
+                        dir="ltr"
                         placeholder="الصق مفتاح TextMeBot الجديد"
                         :invalid="!!keyError"
                         @blur="validateKey"
@@ -304,13 +343,12 @@ function actionMeta(action) {
                     <label for="s-key" class="text-sm text-slate-600 dark:text-slate-300">
                         مفتاح TextMeBot API <span class="text-red-500">*</span>
                     </label>
-                    <Password
-                        input-id="s-key"
+                    <InputText
+                        id="s-key"
                         v-model="form.api_key"
-                        toggle-mask
-                        :feedback="false"
-                        fluid
-                        input-class="font-mono"
+                        class="w-full font-mono"
+                        dir="ltr"
+                        placeholder="الصق مفتاح TextMeBot"
                         :invalid="!!formErrors.api_key"
                     />
                     <small v-if="formErrors.api_key" role="alert" class="text-red-500 mt-1 block">{{ formErrors.api_key }}</small>

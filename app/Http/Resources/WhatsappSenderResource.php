@@ -30,6 +30,7 @@ class WhatsappSenderResource extends JsonResource
             'is_sending' => $this->is_sending,
             'queue_count' => $this->queue_count ?? $this->pendingQueueCount(),
             'api_connected' => $this->status->value !== 'offline',
+            'api_key' => $this->api_key,
             'api_key_hint' => WhatsappSender::apiKeyHint($this->api_key),
             'api_key_rotated_at' => $this->api_key_rotated_at?->toIso8601String(),
             'api_key_rotated_human' => $this->api_key_rotated_at?->diffForHumans(),
