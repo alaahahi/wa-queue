@@ -12,14 +12,17 @@ import Column from 'primevue/column';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import Password from 'primevue/password';
 import Skeleton from 'primevue/skeleton';
 
 const store = useSenderStore();
 const toast = useToast();
 const confirm = useConfirm();
-const showDialog = ref(false);
-const newApiKey = ref('');
+
+const showAddDialog = ref(false);
+const showKeyDialog = ref(false);
 const keyLoading = ref(false);
+
 const form = ref({
     name: '',
     phone: '',
@@ -28,16 +31,77 @@ const form = ref({
     daily_limit: 500,
     priority: 5,
 });
+const formErrors = ref({});
+
+const newApiKey = ref('');
+const keyError = ref('');
 
 const hasSender = computed(() => store.senders.length > 0);
+const sender = computed(() => store.senders[0] ?? null);
 
 onMounted(() => store.fetchSenders());
 
+function validateForm() {
+    const errors = {};
+    if (!form.value.name.trim()) errors.name = 'الاسم مطلوب';
+    if (!form.value.phone.trim()) errors.phone = 'رقم الهاتف مطلوب';
+    if (!form.value.api_key.trim()) errors.api_key = 'مفتاح API مطلوب';
+    else if (form.value.api_key.trim().length < 4) errors.api_key = 'المفتاح قصير جداً';
+    formErrors.value = errors;
+    return Object.keys(errors).length === 0;
+}
+
 async function submit() {
-    await store.create(form.value);
-    showDialog.value = false;
-    toast.add({ severity: 'success', summary: 'تمت إضافة الرقم', life: 3000 });
-    form.value = { name: '', phone: '', api_key: '', delay_seconds: 6, daily_limit: 500, priority: 5 };
+    if (!validateForm()) return;
+
+    keyLoading.value = true;
+    try {
+        await store.create(form.value);
+        showAddDialog.value = false;
+        toast.add({ severity: 'success', summary: 'تمت إضافة الرقم', detail: 'تم حفظ مفتاح API بنجاح', life: 3000 });
+        form.value = { name: '', phone: '', api_key: '', delay_seconds: 6, daily_limit: 500, priority: 5 };
+        formErrors.value = {};
+    } catch (e) {
+        toast.add({ severity: 'error', summary: 'فشل الحفظ', detail: e.response?.data?.message || 'حدث خطأ', life: 5000 });
+    } finally {
+        keyLoading.value = false;
+    }
+}
+
+function openKeyDialog() {
+    newApiKey.value = '';
+    keyError.value = '';
+    showKeyDialog.value = true;
+}
+
+function validateKey() {
+    const v = newApiKey.value.trim();
+    if (!v) {
+        keyError.value = 'المفتاح مطلوب';
+        return false;
+    }
+    if (v.length < 4) {
+        keyError.value = 'المفتاح قصير جداً';
+        return false;
+    }
+    keyError.value = '';
+    return true;
+}
+
+async function saveApiKey() {
+    if (!sender.value || !validateKey()) return;
+
+    keyLoading.value = true;
+    try {
+        await store.updateApiKey(sender.value.id, newApiKey.value.trim());
+        showKeyDialog.value = false;
+        newApiKey.value = '';
+        toast.add({ severity: 'success', summary: 'تم تبديل المفتاح', detail: 'المفتاح الجديد ساري الآن', life: 3000 });
+    } catch (e) {
+        keyError.value = e.response?.data?.message || 'فشل تبديل المفتاح — حاول مجدداً';
+    } finally {
+        keyLoading.value = false;
+    }
 }
 
 async function onCheck(id) {
@@ -55,10 +119,11 @@ async function onRedistribute(id) {
 }
 
 function onDelete(id) {
-    const sender = store.senders.find((s) => s.id === id);
+    const s = store.senders.find((x) => x.id === id);
     confirm.require({
-        message: `حذف الرقم "${sender?.name}"؟ لا يمكن التراجع.`,
+        message: `حذف الرقم "${s?.name}"؟ لا يمكن التراجع.`,
         header: 'تأكيد الحذف',
+        icon: 'pi pi-exclamation-triangle',
         acceptLabel: 'حذف',
         rejectLabel: 'إلغاء',
         acceptClass: 'p-button-danger',
@@ -69,24 +134,10 @@ function onDelete(id) {
     });
 }
 
-async function updateApiKey() {
-    const sender = store.senders[0];
-    if (!sender || !newApiKey.value.trim()) {
-        return;
-    }
-
-    keyLoading.value = true;
-    try {
-        await store.updateApiKey(sender.id, newApiKey.value.trim());
-        newApiKey.value = '';
-        toast.add({ severity: 'success', summary: 'تم تحديث API Key', life: 3000 });
-    } finally {
-        keyLoading.value = false;
-    }
-}
-
-function actionLabel(action) {
-    return action === 'added' ? 'إضافة' : 'تبديل';
+function actionMeta(action) {
+    return action === 'added'
+        ? { label: 'إضافة', severity: 'success', icon: 'pi pi-plus' }
+        : { label: 'تبديل', severity: 'warn', icon: 'pi pi-refresh' };
 }
 </script>
 
@@ -95,29 +146,33 @@ function actionLabel(action) {
         <div class="flex items-center justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold">رقم WhatsApp</h1>
-                <p class="text-sm text-slate-500 mt-1">رقم واحد لكل حساب — API Key، حالة الاتصال، والحد اليومي</p>
+                <p class="text-sm text-slate-500 mt-1">رقم واحد لكل حساب — مفتاح API، حالة الاتصال، والحد اليومي</p>
             </div>
             <Button
                 v-if="!hasSender && !store.loading"
                 label="إضافة رقم"
                 icon="pi pi-plus"
-                @click="showDialog = true"
+                @click="showAddDialog = true"
             />
         </div>
 
-        <div v-if="store.loading" class="max-w-xl">
-            <Skeleton height="260px" class="rounded-xl" />
+        <div v-if="store.loading" class="max-w-xl space-y-4">
+            <Skeleton height="240px" class="rounded-xl" />
+            <Skeleton height="180px" class="rounded-xl" />
         </div>
 
-        <div v-else-if="!hasSender" class="max-w-xl rounded-xl border border-dashed border-slate-300 p-10 text-center">
+        <div
+            v-else-if="!hasSender"
+            class="max-w-xl rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-10 text-center"
+        >
             <i class="pi pi-whatsapp text-4xl text-emerald-500 mb-3" />
-            <p class="text-slate-600 mb-4">لم يُضف رقم WhatsApp بعد</p>
-            <Button label="إضافة رقم" icon="pi pi-plus" @click="showDialog = true" />
+            <p class="text-slate-600 dark:text-slate-300 mb-4">لم يُضف رقم WhatsApp بعد</p>
+            <Button label="إضافة رقم" icon="pi pi-plus" @click="showAddDialog = true" />
         </div>
 
         <div v-else class="max-w-xl space-y-4">
             <SenderCard
-                :sender="store.senders[0]"
+                :sender="sender"
                 @check="onCheck"
                 @toggle="onToggle"
                 @redistribute="onRedistribute"
@@ -125,51 +180,51 @@ function actionLabel(action) {
             />
 
             <Card>
-                <template #title>TextMeBot API Key</template>
+                <template #title>
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="flex items-center gap-2">
+                            <i class="pi pi-key text-indigo-500" />
+                            مفتاح TextMeBot
+                        </span>
+                        <Tag
+                            :value="sender.api_key_rotation_due ? 'يحتاج تبديل' : 'ساري'"
+                            :severity="sender.api_key_rotation_due ? 'warn' : 'success'"
+                            :icon="sender.api_key_rotation_due ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"
+                        />
+                    </div>
+                </template>
                 <template #content>
                     <div class="space-y-4">
-                        <div class="flex items-center justify-between gap-3 text-sm">
+                        <div class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
                             <div>
-                                <div class="font-mono" dir="ltr">{{ store.senders[0].api_key_hint }}</div>
+                                <div class="font-mono text-base tracking-wider" dir="ltr">{{ sender.api_key_hint }}</div>
                                 <div class="text-xs text-slate-500 mt-1">
-                                    آخر تحديث: {{ store.senders[0].api_key_rotated_human || '—' }}
+                                    <i class="pi pi-clock text-[10px]" />
+                                    آخر تحديث: {{ sender.api_key_rotated_human || '—' }}
                                 </div>
                             </div>
-                            <Tag
-                                v-if="store.senders[0].api_key_rotation_due"
-                                value="يحتاج تبديل"
-                                severity="warn"
-                            />
-                            <Tag
-                                v-else
-                                value="ساري"
-                                severity="success"
+                            <Button
+                                label="تبديل المفتاح"
+                                icon="pi pi-refresh"
+                                size="small"
+                                outlined
+                                aria-label="تبديل مفتاح API"
+                                @click="openKeyDialog"
                             />
                         </div>
 
                         <div
-                            v-if="store.senders[0].api_key_rotation_due"
-                            class="text-xs text-amber-700 bg-amber-50 rounded-lg p-3"
+                            v-if="sender.api_key_rotation_due"
+                            role="alert"
+                            class="flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3"
                         >
-                            يُفضّل تبديل المفتاح كل {{ store.senders[0].api_key_rotation_days }} أيام
+                            <i class="pi pi-exclamation-triangle mt-0.5" />
+                            <span>مضى أكثر من {{ sender.api_key_rotation_days }} أيام على آخر تبديل — يُنصح بتحديث المفتاح للحفاظ على الأمان.</span>
                         </div>
 
-                        <div>
-                            <label class="text-sm text-slate-500">مفتاح جديد</label>
-                            <InputText v-model="newApiKey" class="w-full font-mono" dir="ltr" placeholder="الصق المفتاح الجديد" />
-                        </div>
-                        <Button
-                            label="حفظ المفتاح الجديد"
-                            icon="pi pi-key"
-                            class="w-full"
-                            :loading="keyLoading"
-                            :disabled="!newApiKey.trim()"
-                            @click="updateApiKey"
-                        />
-
-                        <div v-if="store.senders[0].api_key_logs?.length" class="pt-2 border-t border-slate-100">
+                        <div v-if="sender.api_key_logs?.length" class="pt-2 border-t border-slate-100 dark:border-slate-800">
                             <div class="text-sm font-medium mb-2">سجل المفاتيح</div>
-                            <DataTable :value="store.senders[0].api_key_logs" size="small" striped-rows>
+                            <DataTable :value="sender.api_key_logs" size="small" striped-rows>
                                 <Column header="المفتاح">
                                     <template #body="{ data }">
                                         <span class="font-mono" dir="ltr">{{ data.key_hint }}</span>
@@ -177,47 +232,108 @@ function actionLabel(action) {
                                 </Column>
                                 <Column header="الإجراء">
                                     <template #body="{ data }">
-                                        {{ actionLabel(data.action) }}
+                                        <Tag
+                                            :value="actionMeta(data.action).label"
+                                            :severity="actionMeta(data.action).severity"
+                                            :icon="actionMeta(data.action).icon"
+                                        />
                                     </template>
                                 </Column>
                                 <Column field="created_human" header="التاريخ" />
                             </DataTable>
                         </div>
+                        <p v-else class="text-xs text-slate-400 text-center py-2">لا يوجد سجل بعد</p>
                     </div>
                 </template>
             </Card>
         </div>
 
-        <Dialog v-model:visible="showDialog" header="إضافة رقم WhatsApp" modal class="w-full max-w-lg">
+        <!-- تبديل المفتاح -->
+        <Dialog v-model:visible="showKeyDialog" header="تبديل مفتاح API" modal class="w-full max-w-md">
+            <div class="space-y-4">
+                <div
+                    class="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3"
+                >
+                    <i class="pi pi-info-circle mt-0.5 text-indigo-500" />
+                    <span>سيتوقف المفتاح الحالي فوراً بعد الحفظ، وسيبدأ استخدام المفتاح الجديد.</span>
+                </div>
+
+                <div>
+                    <label for="new-api-key" class="text-sm text-slate-600 dark:text-slate-300">
+                        المفتاح الجديد <span class="text-red-500">*</span>
+                    </label>
+                    <Password
+                        input-id="new-api-key"
+                        v-model="newApiKey"
+                        toggle-mask
+                        :feedback="false"
+                        fluid
+                        input-class="font-mono"
+                        placeholder="الصق مفتاح TextMeBot الجديد"
+                        :invalid="!!keyError"
+                        @blur="validateKey"
+                        @keyup.enter="saveApiKey"
+                    />
+                    <small v-if="keyError" role="alert" class="text-red-500 mt-1 block">{{ keyError }}</small>
+                </div>
+            </div>
+            <template #footer>
+                <Button label="إلغاء" text severity="secondary" :disabled="keyLoading" @click="showKeyDialog = false" />
+                <Button label="حفظ المفتاح" icon="pi pi-check" :loading="keyLoading" @click="saveApiKey" />
+            </template>
+        </Dialog>
+
+        <!-- إضافة رقم -->
+        <Dialog v-model:visible="showAddDialog" header="إضافة رقم WhatsApp" modal class="w-full max-w-lg">
             <div class="space-y-4">
                 <div>
-                    <label class="text-sm text-slate-500">الاسم</label>
-                    <InputText v-model="form.name" class="w-full" />
+                    <label for="s-name" class="text-sm text-slate-600 dark:text-slate-300">
+                        الاسم <span class="text-red-500">*</span>
+                    </label>
+                    <InputText id="s-name" v-model="form.name" class="w-full" :invalid="!!formErrors.name" />
+                    <small v-if="formErrors.name" role="alert" class="text-red-500 mt-1 block">{{ formErrors.name }}</small>
                 </div>
                 <div>
-                    <label class="text-sm text-slate-500">رقم الهاتف (+964...)</label>
-                    <InputText v-model="form.phone" class="w-full" dir="ltr" />
+                    <label for="s-phone" class="text-sm text-slate-600 dark:text-slate-300">
+                        رقم الهاتف (+964...) <span class="text-red-500">*</span>
+                    </label>
+                    <InputText id="s-phone" v-model="form.phone" class="w-full" dir="ltr" :invalid="!!formErrors.phone" />
+                    <small v-if="formErrors.phone" role="alert" class="text-red-500 mt-1 block">{{ formErrors.phone }}</small>
                 </div>
                 <div>
-                    <label class="text-sm text-slate-500">TextMeBot API Key</label>
-                    <InputText v-model="form.api_key" class="w-full" dir="ltr" />
+                    <label for="s-key" class="text-sm text-slate-600 dark:text-slate-300">
+                        مفتاح TextMeBot API <span class="text-red-500">*</span>
+                    </label>
+                    <Password
+                        input-id="s-key"
+                        v-model="form.api_key"
+                        toggle-mask
+                        :feedback="false"
+                        fluid
+                        input-class="font-mono"
+                        :invalid="!!formErrors.api_key"
+                    />
+                    <small v-if="formErrors.api_key" role="alert" class="text-red-500 mt-1 block">{{ formErrors.api_key }}</small>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="text-sm text-slate-500">التأخير (ث)</label>
+                        <label class="text-sm text-slate-600 dark:text-slate-300">التأخير (ث)</label>
                         <InputNumber v-model="form.delay_seconds" class="w-full" :min="1" />
                     </div>
                     <div>
-                        <label class="text-sm text-slate-500">الحد اليومي</label>
+                        <label class="text-sm text-slate-600 dark:text-slate-300">الحد اليومي</label>
                         <InputNumber v-model="form.daily_limit" class="w-full" :min="1" />
                     </div>
                     <div>
-                        <label class="text-sm text-slate-500">الأولوية</label>
+                        <label class="text-sm text-slate-600 dark:text-slate-300">الأولوية</label>
                         <InputNumber v-model="form.priority" class="w-full" :min="1" :max="10" />
                     </div>
                 </div>
-                <Button label="حفظ" class="w-full" @click="submit" />
             </div>
+            <template #footer>
+                <Button label="إلغاء" text severity="secondary" :disabled="keyLoading" @click="showAddDialog = false" />
+                <Button label="حفظ الرقم" icon="pi pi-check" :loading="keyLoading" @click="submit" />
+            </template>
         </Dialog>
     </div>
 </template>
