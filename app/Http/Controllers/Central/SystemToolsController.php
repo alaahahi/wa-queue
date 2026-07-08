@@ -52,6 +52,11 @@ class SystemToolsController extends Controller
         return $this->runArtisan('tenants:migrate', $params);
     }
 
+    public function cleanupKeyLogs(): JsonResponse
+    {
+        return $this->runArtisan('wa:cleanup-key-logs');
+    }
+
     public function clearLogs(): JsonResponse
     {
         $path = storage_path('logs/laravel.log');

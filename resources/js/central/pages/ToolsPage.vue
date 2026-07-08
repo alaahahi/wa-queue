@@ -134,6 +134,37 @@ async function migrateTenants() {
     }
 }
 
+function confirmCleanupKeyLogs() {
+    confirm.require({
+        message: 'حذف سجلات المفاتيح المُقنّعة القديمة (****) من كل الزبائن؟ لا تحمل قيمة قابلة للاسترجاع.',
+        header: 'تنظيف سجل المفاتيح',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'تنفيذ',
+        rejectLabel: 'إلغاء',
+        acceptClass: 'p-button-danger',
+        accept: cleanupKeyLogs,
+    });
+}
+
+async function cleanupKeyLogs() {
+    running.value = 'cleanup-keys';
+    output.value = '';
+    try {
+        const { data } = await api.post('/system/cleanup-key-logs');
+        output.value = data.output;
+        toast.add({
+            severity: data.success ? 'success' : 'error',
+            summary: data.success ? 'تم تنظيف سجل المفاتيح' : 'فشل التنظيف',
+            life: 4000,
+        });
+    } catch (e) {
+        output.value = e.response?.data?.output || e.message;
+        toast.add({ severity: 'error', summary: 'خطأ', detail: output.value, life: 6000 });
+    } finally {
+        running.value = '';
+    }
+}
+
 function formatBytes(bytes) {
     if (!bytes) return '0 B';
     const units = ['B', 'KB', 'MB', 'GB'];
@@ -212,6 +243,25 @@ function formatBytes(bytes) {
                     <div v-if="output" class="rounded-lg bg-slate-950 text-emerald-300 p-4 text-xs font-mono whitespace-pre-wrap max-h-64 overflow-auto" dir="ltr">
                         {{ output }}
                     </div>
+                </div>
+            </template>
+        </Card>
+
+        <Card>
+            <template #title>صيانة</template>
+            <template #content>
+                <div class="flex flex-wrap items-center gap-3">
+                    <Button
+                        label="تنظيف سجل المفاتيح المُقنّعة"
+                        icon="pi pi-key"
+                        severity="danger"
+                        outlined
+                        :loading="running === 'cleanup-keys'"
+                        @click="confirmCleanupKeyLogs"
+                    />
+                    <span class="text-xs text-slate-500">
+                        يحذف الإدخالات القديمة التي تظهر بصيغة ****xxxx من سجل مفاتيح كل الزبائن.
+                    </span>
                 </div>
             </template>
         </Card>

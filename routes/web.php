@@ -28,6 +28,7 @@ Route::prefix('central/api/v1')->group(function () {
     Route::post('/system/migrate-central', [SystemToolsController::class, 'migrateCentral']);
     Route::post('/system/migrate-tenants', [SystemToolsController::class, 'migrateTenants']);
     Route::post('/system/clear-logs', [SystemToolsController::class, 'clearLogs']);
+    Route::post('/system/cleanup-key-logs', [SystemToolsController::class, 'cleanupKeyLogs']);
 });
 
 Route::get('/admin/{any?}', function () {
